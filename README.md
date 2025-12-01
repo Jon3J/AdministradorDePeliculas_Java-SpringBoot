@@ -33,3 +33,6 @@ Tecnologías utilizadas:
 
 Objetivo del proyecto:
 Este administrador de películas busca demostrar buenas prácticas en el desarrollo backend con Java, incluyendo seguridad, persistencia y diseño limpio. Es un proyecto pensado para servir como base en aplicaciones más complejas, integrando autenticación, autorización y gestión de datos de manera profesional.
+
+![Texto alternativo](./images/captura.png)
+
