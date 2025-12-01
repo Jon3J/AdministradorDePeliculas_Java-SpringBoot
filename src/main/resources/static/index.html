@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administración de Películas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap');
+
+    body {
+        font-family: 'Cinzel', serif;
+        margin: 0;
+        background-color: #0d0d0d;
+        color: #f5f5f5;
+    }
+
+    header {
+        background: linear-gradient(90deg, #ff416c, #ff4b2b);
+        padding: 20px;
+        text-align: center;
+        font-size: 2.5em;
+        color: white;
+        box-shadow: 0 0 15px #ff416c;
+        letter-spacing: 2px;
+    }
+
+    nav {
+        background-color: #1a1a1a;
+        display: flex;
+        justify-content: center;
+        gap: 25px;
+        padding: 14px 0;
+        border-bottom: 1px solid #333;
+    }
+
+    nav a {
+        color: #ff416c;
+        text-decoration: none;
+        padding: 8px 18px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        font-weight: bold;
+    }
+
+    nav a:hover {
+        background-color: #ff416c;
+        color: #0d0d0d;
+    }
+
+    h3 {
+        text-align: center;
+        font-size: 2em;
+        margin-top: 25px;
+        color: #ff416c;
+    }
+
+    #panel {
+        background-color: #1a1a1a;
+        margin: 20px;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(255, 65, 108, 0.3);
+    }
+
+    button {
+        margin: 6px;
+        padding: 12px 18px;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        font-size: 15px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+        transform: scale(1.07);
+        box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    .btn-red {
+        background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    }
+
+    .btn-green {
+        background: linear-gradient(45deg, #00ff88, #00c66e);
+    }
+
+    .btn-orange {
+        background: linear-gradient(45deg, #ff8c00, #ff5e00);
+    }
+
+    .btn-gray {
+        background-color: #444;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: #1a1a1a;
+        color: #f5f5f5;
+    }
+
+    th, td {
+        padding: 12px;
+        border: 1px solid #333;
+        text-align: center;
+    }
+
+    th {
+        background-color: #2a2a2a;
+        color: #ff416c;
+    }
+
+    input {
+        padding: 10px;
+        margin: 6px;
+        border: 1px solid #555;
+        border-radius: 6px;
+        background-color: #1a1a1a;
+        color: #f5f5f5;
+    }
+
+    #tablaResultados {
+        margin: 20px;
+    }
+</style>
+
+</head>
+
+<body>
+
+<header>
+    <i class="fas fa-film"></i> Administración de Películas
+</header>
+
+<nav>
+    <a href="#">Películas</a>
+    <a href="#">Directores</a>
+    <a href="#">Géneros</a>
+    <a href="#">Usuarios</a>
+    <a href="#">Almacén</a>
+    <a href="#">Reportes</a>
+</nav>
+
+<h3>Gestión del Catálogo de Películas</h3>
+
+<div id="panel">
+    <button class="btn-red" onclick="listarPeliculas()"><i class="fas fa-list"></i> Listar Películas</button>
+    <button class="btn-red" onclick="buscarPeliculaId()"><i class="fas fa-search"></i> Buscar Película</button>
+    <hr>
+    <button class="btn-green" onclick="mostrarFormularioActualizar()"><i class="fas fa-edit"></i> Actualizar Película</button>
+    <button class="btn-gray" onclick="mostrarFormularioEliminar()"><i class="fas fa-trash"></i> Eliminar Película</button>
+    <button class="btn-orange" onclick="mostrarFormularioInsertar()"><i class="fas fa-plus"></i> Insertar Película</button>
+</div>
+
+<div id="formularios" style="margin: 20px;"></div>
+<div id="tablaResultados"></div>
+
+<script>
+    const BASE_URL = "http://localhost:8080/api/peliculas";
+
+    // LISTAR PELÍCULAS
+    function listarPeliculas() {
+        $.get(BASE_URL, function (data) {
+            mostrarTabla(data);
+        }).fail(() => Swal.fire("Error", "No se pudieron obtener las películas", "error"));
+    }
+
+    // BUSCAR POR ID
+    function buscarPeliculaId() {
+        Swal.fire({
+            title: "Buscar película",
+            input: "number",
+            inputLabel: "Ingrese el ID de la película",
+            showCancelButton: true,
+            confirmButtonText: "Buscar"
+        }).then(result => {
+            if (result.isConfirmed && result.value) {
+                $.get(BASE_URL + "/" + result.value, function (data) {
+                    mostrarTabla([data]);
+                }).fail(() => Swal.fire("Error", "Película no encontrada", "error"));
+            }
+        });
+    }
+
+    // FORMULARIO ACTUALIZAR
+    function mostrarFormularioActualizar() {
+        $("#formularios").html(`
+            <h4>Actualizar Película</h4>
+            <input type="number" id="updId" placeholder="ID de la película"><br>
+            <input type="text" id="updTitulo" placeholder="Nuevo título"><br>
+            <input type="text" id="updDirector" placeholder="Nuevo director"><br>
+            <input type="text" id="updGenero" placeholder="Nuevo género"><br>
+            <input type="number" id="updAniolanzamiento" placeholder="Nuevo año de lanzamiento"><br>
+            <input type="text" id="updPortadaUrl" placeholder="Nueva URL de portada"><br>
+            <button class="btn-green" onclick="actualizarPelicula()">Actualizar</button>
+        `);
+    }
+
+    // ACTUALIZAR PELÍCULA
+    function actualizarPelicula() {
+        const id = $("#updId").val();
+        const dto = {
+            titulo: $("#updTitulo").val(),
+            director: $("#updDirector").val(),
+            genero: $("#updGenero").val(),
+            aniolanzamiento: $("#updAniolanzamiento").val(),
+            portadaUrl: $("#updPortadaUrl").val()
+        };
+        $.ajax({
+            url: BASE_URL + "/" + id,
+            method: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(dto),
+            success: data => {
+                Swal.fire("Éxito", "Película actualizada correctamente", "success");
+                mostrarTabla([data]);
+            },
+            error: () => Swal.fire("Error", "No se pudo actualizar", "error")
+        });
+    }
+
+    // FORMULARIO ELIMINAR
+    function mostrarFormularioEliminar() {
+        $("#formularios").html(`
+            <h4>Eliminar Película</h4>
+            <input type="number" id="delId" placeholder="ID de la película"><br>
+            <button class="btn-gray" onclick="eliminarPelicula()">Eliminar</button>
+        `);
+    }
+
+    // ELIMINAR PELÍCULA
+    function eliminarPelicula() {
+        const id = $("#delId").val();
+        $.ajax({
+            url: BASE_URL + "/" + id,
+            method: "DELETE",
+            success: () => Swal.fire("Éxito", "Película eliminada correctamente", "success"),
+            error: () => Swal.fire("Error", "No se pudo eliminar la película", "error")
+        });
+    }
+
+    // FORMULARIO INSERTAR
+    function mostrarFormularioInsertar() {
+        $("#formularios").html(`
+            <h4>Insertar Nueva Película</h4>
+            <input type="text" id="insTitulo" placeholder="Título de la película"><br>
+            <input type="text" id="insDirector" placeholder="Director"><br>
+            <input type="text" id="insGenero" placeholder="Género"><br>
+            <input type="number" id="insAniolanzamiento" placeholder="Año de lanzamiento"><br>
+            <input type="text" id="insPortadaUrl" placeholder="URL de la portada"><br>
+            <button class="btn-orange" onclick="insertarPelicula()">Guardar</button>
+        `);
+    }
+
+    // INSERTAR PELÍCULA
+    function insertarPelicula() {
+        const dto = {
+            titulo: $("#insTitulo").val(),
+            director: $("#insDirector").val(),
+            genero: $("#insGenero").val(),
+            aniolanzamiento: $("#insAniolanzamiento").val(),
+            portadaUrl: $("#insPortadaUrl").val()
+        };
+        $.ajax({
+            url: BASE_URL,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(dto),
+            success: data => {
+                Swal.fire("Éxito", "Película agregada correctamente", "success");
+                mostrarTabla([data]);
+            },
+            error: () => Swal.fire("Error", "No se pudo insertar la película", "error")
+        });
+    }
+
+    // MOSTRAR TABLA
+    function mostrarTabla(data) {
+        let html = `
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Director</th>
+                    <th>Género</th>
+                    <th>Año de lanzamiento</th>
+                    <th>Portada</th>
+                </tr>
+        `;
+        data.forEach(p => {
+            html += `
+                <tr>
+                    <td>${p.id}</td>
+                    <td>${p.titulo}</td>
+                    <td>${p.director}</td>
+                    <td>${p.genero}</td>
+                    <td>${p.aniolanzamiento}</td>
+                    <td>
+                        ${p.portadaUrl 
+                            ? `<img src="${p.portadaUrl}" alt="Portada" style="width:80px; border-radius:6px;">`
+                            : 'Sin portada'}
+                    </td>
+                </tr>
+            `;
+        });
+        html += "</table>";
+        $("#tablaResultados").html(html);
+    }
+</script>
+
+</body>
+</html>
+
+           
